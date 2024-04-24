@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: metan_waas_suite - R script for streamlined Genotype × Environment interaction analysis based on WAAS model
+version: v1.0.0
+doi: 10.5281/zenodo.11057471
+url: "https://doi.org/10.5281/zenodo.11057471"
+message: >-
+  Your one-stop solution for comprehensive genotype ×
+  environment interaction and stability analysis (WAAS
+  model) using the metan package. 
+type: software
+authors:
+  - given-names: Sonu
+    family-names: Langaya
+    email: sonulangaya@yahoo.in
+    affiliation: 'Chaudhary Charan Singh Haryana Agricultural University'
+    orcid: 'https://orcid.org/0000-0001-5450-6945'
+repository-code: 'https://github.com/sonulangaya/metan_waas_suite'
+abstract: >-
+  metan_waas_suite is a powerful R script that facilitates
+  comprehensive genotype × environment interaction and
+  stability analysis using the metan package. The script is
+  designed to import your data, clean and inspect it, and
+  perform a range of analyses for all traits at once, with a
+  specific focus on the WAAS model.
+keywords:
+  - waas
+  - metan
+  - stability
+  - G × E
