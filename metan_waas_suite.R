@@ -10,14 +10,14 @@ library(writexl)
 library(openxlsx)
 options(max.print = 10000)
 
-#################data import####################################
+############################### data import ####################################
 
 stabdata<-read.csv(file.choose(),)
 attach(stabdata)
 str(stabdata)
 options(max.print = 10000)
 
-############################# factors with unique levels ####################
+######################### factors with unique levels ###########################
 
 stabdata$ENV <- factor(stabdata$ENV, levels=unique(stabdata$ENV))
 stabdata$GEN <- factor(stabdata$GEN, levels=unique(stabdata$GEN))
@@ -25,12 +25,12 @@ stabdata$REP <- factor(stabdata$REP, levels=unique(stabdata$REP))
 str(stabdata)
 
 
-################# extract trait name from data file ######
+###################### extract trait name from data file #######################
 
 traitall <- colnames(stabdata)[sapply(stabdata, is.numeric)]
 traitall
 
-############ Data inspection and cleaning functions ##############
+################### Data inspection and cleaning functions #####################
 
 inspect(stabdata, threshold= 50, plot=FALSE) %>% rmarkdown::paged_table()
 
@@ -43,8 +43,8 @@ remove_rows_na(stabdata)
 replace_zero(stabdata)
 find_text_in_num(stabdata, var = all_of(trait))
 
-######################### data analysis ##################################
-###################### descriptive stats ################################
+############################# data analysis ####################################
+########################### descriptive stats ##################################
 
 if (!file.exists("output")) {
   dir.create("output")
@@ -56,26 +56,26 @@ ds <- desc_stat(stabdata, stats="all", hist = TRUE, plot_theme = theme_metan())
 write_xlsx(ds, file.path("output", "Descriptive.xlsx"))
 
 
-######################## mean performances ##############################
-####################### mean of genotypes #############################
+############################# mean performances ################################
+############################# mean of genotypes ################################
 
 mg <- mean_by(stabdata, GEN) 
 mg
 View(mg)
 
-######################### mean of environments #######################
+############################# mean of environments #############################
 
 me <- mean_by(stabdata, ENV)
 me
 View(me)
 
-########################## two way mean ###############################
+################################# two way mean #################################
 
 dm <- mean_by(stabdata, GEN, ENV)
 dm
 View(dm)
 
-########### mean performance of genotypes across environments ###########
+############### mean performance of genotypes across environments ##############
 
 mge <- stabdata %>% 
   group_by(ENV, GEN) %>%
@@ -83,7 +83,7 @@ mge <- stabdata %>%
 mge
 View(mge)
 
-######### Exporting all mean performances computed above #################
+############### Exporting all mean performances computed above #################
 
 write_xlsx(
   list(
@@ -95,7 +95,7 @@ write_xlsx(
   file.path("output", "Mean Performance.xlsx")
 )
 
-#####################two-way table for all##########################
+############################ two-way table for all #############################
 
 twgy_list <- list()
 
@@ -119,18 +119,20 @@ for (trait in traitall) {
 
 saveWorkbook(twgy_wb, file.path("output", "TWmean.xlsx"), overwrite = TRUE)
 
-############### plotting performance across environments ################
-############### make performance for all traits in one #################
+################### plotting performance across environments ###################
+#################### make performance for all traits in one ####################
+################################## Heatmap #####################################
 
-perfor_list <- list()
+perfor_heat_list <- list()
 
 for (trait in traitall) {
-  perfor_list[[trait]] <-
+  perfor_heat_list[[trait]] <-
     ge_plot(
       stabdata,
       ENV,
       GEN,
       !!sym(trait),
+      type = 1,
       values = FALSE,
       average = FALSE,
       text_col_pos = c("bottom"),
@@ -142,12 +144,13 @@ for (trait in traitall) {
       plot_theme = theme_metan(),
       colour = TRUE
     ) + geom_tile(color = "transparent") + labs(title = paste0(trait, " performance across eight environments")) + theme(legend.title = element_text(), axis.text.x.bottom = element_text(angle = 0, hjust = .5)) + guides(fill = guide_colourbar(title = trait, barwidth = 1.5, barheight = 20))
-  assign(paste0(trait, "_perfor"), perfor_list[[trait]])
+  assign(paste0(trait, "_perfor_heat"), perfor_heat_list[[trait]])
 }
-######## print all plots once #########################################
+
+############################## print all plots once ############################
 
 for (trait in traitall) {
-  print(perfor_list[[trait]])
+  print(perfor_heat_list[[trait]])
 }
 
 ##################### high quality save all in one  ############################
@@ -156,18 +159,66 @@ if (!file.exists("output")) {
   dir.create("output")
 }
 
-if (!file.exists(file.path("output", "perfor_plots"))) {
-  dir.create(file.path("output", "perfor_plots"))
+if (!file.exists(file.path("output", "perfor_heat_plot"))) {
+  dir.create(file.path("output", "perfor_heat_plot"))
 }
 
 for (trait in traitall) {
-  ggsave(filename = file.path("output", "perfor_plots", paste0(trait, ".png")),
-         plot = perfor_list[[trait]], width = 20, height = 30,
+  ggsave(filename = file.path("output", "perfor_heat_plot", paste0(trait, ".png")),
+         plot = perfor_heat_list[[trait]], width = 20, height = 30,
          dpi = 600, units = "cm")
 }
 
-###################### Genotype-environment winners ####################
-### edit better argument as for some variables lower values are preferred and higher for others ####
+################################# Line plot ####################################
+
+perfor_line_list <- list()
+
+for (trait in traitall) {
+  perfor_line_list[[trait]] <-
+    ge_plot(
+      stabdata,
+      ENV,
+      GEN,
+      !!sym(trait),
+      type = 1,
+      values = FALSE,
+      average = FALSE,
+      text_col_pos = c("bottom"),
+      text_row_pos = c("left"),
+      width_bar = 1.5,
+      heigth_bar = 20,
+      xlab = "ENV",
+      ylab = "GEN",
+      plot_theme = theme_metan(),
+      colour = TRUE
+    ) + geom_tile(color = "transparent") + labs(title = paste0(trait, " performance across eight environments")) + theme(legend.title = element_text(), axis.text.x.bottom = element_text(angle = 0, hjust = .5)) + guides(fill = guide_colourbar(title = trait, barwidth = 1.5, barheight = 20))
+  assign(paste0(trait, "_perfor_line"), perfor_line_list[[trait]])
+}
+
+############################## print all plots once ############################
+
+for (trait in traitall) {
+  print(perfor_line_list[[trait]])
+}
+
+##################### high quality save all in one  ############################
+
+if (!file.exists("output")) {
+  dir.create("output")
+}
+
+if (!file.exists(file.path("output", "perfor_line_plot"))) {
+  dir.create(file.path("output", "perfor_line_plot"))
+}
+
+for (trait in traitall) {
+  ggsave(filename = file.path("output", "perfor_line_plot", paste0(trait, ".png")),
+         plot = perfor_line_list[[trait]], width = 20, height = 30,
+         dpi = 600, units = "cm")
+}
+
+########################## Genotype-environment winners ########################
+#edit better argument as for some variables lower values are preferred and higher for others ####
 
 traitall ### view your traits to decide for above condition ###
 
@@ -195,9 +246,9 @@ View(ranks)
 
 write_xlsx(list("winner" = win, "ranks" = ranks), file.path("output", "winner rank.xlsx"))
 
-############################ ge or gge effects ############################
-######################### combined for all ge effects #########################
-######################## ge effects to excel #############################
+############################ ge or gge effects #################################
+######################### combined for all ge effects ##########################
+########################## ge effects to excel #################################
 
 ge_list <- ge_effects(stabdata, ENV, GEN, resp = everything(), type = "ge")
 
@@ -207,7 +258,7 @@ for (trait in traitall) {
   result_ge_list[[trait]] <- ge_list_result
 }
 
-######################### save all in one excel  #############################
+########################### save all in one excel  #############################
 
 ge_list_wb <- createWorkbook()
 for (trait in traitall) {
@@ -216,7 +267,7 @@ for (trait in traitall) {
 }
 saveWorkbook(ge_list_wb, file.path("output","ge_effects.xlsx"), overwrite = TRUE)
 
-######################## ge effects plots #############################
+############################## ge effects plots ################################
 
 ge_plots <- list()
 
@@ -246,9 +297,58 @@ for (trait in traitall) {
          dpi = 600, units = "cm")
 }
 
-########################## fixed effect models #############################
+########################## gge effects to excel ################################
+
+gge_list <- ge_effects(stabdata, ENV, GEN, resp = everything(), type = "gge")
+
+result_gge_list <- list()
+for (trait in traitall) {
+  gge_list_result <- as.data.frame(gge_list[[trait]])
+  result_gge_list[[trait]] <- gge_list_result
+}
+
+########################### save all in one excel  #############################
+
+gge_list_wb <- createWorkbook()
+for (trait in traitall) {
+  addWorksheet(gge_list_wb, sheetName = paste0(trait, ""))
+  writeData(gge_list_wb, sheet = trait, x = result_gge_list[[trait]])
+}
+saveWorkbook(gge_list_wb, file.path("output","gge_effects.xlsx"), overwrite = TRUE)
+
+############################## ge effects plots ################################
+
+gge_plots <- list()
+
+for (trait in traitall) {
+  gge_plots[[trait]] <- plot(gge_list) + aes(ENV, GEN) + theme(legend.title = element_text()) + guides(fill = guide_colourbar(title = paste0(trait, " gge effects"), barwidth = 1.5, barheight = 20))
+}  ## also coord_flip() in place of aes
+
+################# print all plots once #########################################
+
+for (trait in traitall) {
+  print(gge_plots[[trait]])
+}
+
+##################### high quality save all in one  ############################
+
+if (!file.exists("output")) {
+  dir.create("output")
+}
+
+if (!file.exists(file.path("output", "gge_plots"))) {
+  dir.create(file.path("output", "gge_plots"))
+}
+
+for (trait in traitall) {
+  ggsave(filename = file.path("output", "gge_plots", paste0(trait, ".png")),
+         plot = gge_plots[[trait]], width = 20, height = 30,
+         dpi = 600, units = "cm")
+}
+
+############################ fixed effect models ###############################
 ########################### Individual  and Joint anova ########################
-############# Individual anova for all traits ##################################
+######################### Individual anova for all traits ######################
 
 aovind_list <- anova_ind(stabdata, env = ENV, gen = GEN, rep = REP, resp = everything())
 
@@ -265,7 +365,7 @@ for (trait in traitall) {
 }
 saveWorkbook(aovind_wb, file.path("output","indaovall.xlsx"), overwrite = TRUE)
 
-################## Joint anova for all traits (ANOVA) ##################################
+################## Joint anova for all traits (ANOVA) ##########################
 
 aovjoin_list <- anova_joint(stabdata, env = ENV, gen = GEN, rep = REP, resp = everything())
 
@@ -282,7 +382,7 @@ for (trait in traitall) {
 }
 saveWorkbook(aovjoin_wb, file.path("output","joinaovall.xlsx"), overwrite = TRUE)
 
-################## Joint anova for all traits (Details) (2) ########################
+################## Joint anova for all traits (Details) (2) ####################
 
 result_aovjoin2 <- list()
 for (trait in traitall) {
